@@ -1,0 +1,13 @@
+moviepy
+openai
+transformers
+torch
+langchain
+streamlit
+google-generativeai
+python-dotenv
+imageio-ffmpeg
+watchdog
+requests
+yt-dlp
+pytube

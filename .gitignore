@@ -1,0 +1,13 @@
+# Python/venv
+.venv/
+__pycache__/
+.pytest_cache/
+
+# IDE
+.vscode/
+
+# Environment
+.env
+
+# Temporary uploads
+temp_uploads/
