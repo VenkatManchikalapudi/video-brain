@@ -1,118 +1,260 @@
-"""Backend helpers for Video Brain.
+"""Backend service layer for Video Brain.
 
-This module provides lightweight video metadata extraction and a small
-in-memory session history used by the Streamlit frontend. It delegates
-text-generation to `gemini_client.generate_response`, which may call
-Google Gemini or return a local mock for development.
-
-Notes:
-- `_SESSIONS` is an in-memory store mapping `session_id` -> list of
-  message dicts. For production use a database or external cache.
+Coordinates between the Streamlit UI and AI/processing services.
 """
 
-import os
-from typing import Dict, List
-import gemini_client
+import logging
+from typing import Optional
+
+from services.ollama_client import get_ollama_client
+from services.session_manager import get_session_manager
+from services.video_processor import VideoProcessor
+from services.frame_extractor import get_frame_extractor
+from utils.storage import extract_and_transcribe, get_youtube_transcript
+from models import AIResponse, VideoDetails
+
+logger = logging.getLogger(__name__)
 
 
-# Simple in-memory session store. For production, replace with persistent store.
-_SESSIONS: Dict[str, List[Dict]] = {}
+def process_video_upload(video_path: str) -> Optional[dict]:
+    """Extract and return video metadata.
+    
+    Args:
+        video_path: Path to the video file
+        
+    Returns:
+        Dict with video metadata (duration, fps, etc.) or None on failure
+    """
+    processor = VideoProcessor()
+    metadata = processor.extract_metadata(video_path)
+    
+    if not metadata:
+        logger.warning(f"Could not extract metadata from {video_path}")
+        return None
+    
+    return {
+        "duration": metadata.duration,
+        "fps": metadata.fps,
+        "width": metadata.width,
+        "height": metadata.height,
+    }
 
 
-def process_video_upload(video_path: str) -> Dict:
-    """Extract lightweight metadata from an uploaded video file.
-
-    Returns a dict with keys like `duration` and `fps` on success.
-    On failure returns an empty dict. This function intentionally keeps
-    processing minimal (no heavy transcoding) so it is safe to run in
-    the Streamlit process.
+def handle_user_message(
+    session_id: str,
+    message: str,
+    video_path: Optional[str] = None,
+    transcript: Optional[str] = None,
+    video_details=None,
+) -> dict:
+    """Process a user message and generate an AI response.
+    
+    Coordinates:
+    - Session history management
+    - Video frame extraction for context
+    - Transcript context if available
+    - Video details (show name, episode, etc) for context
+    - AI response generation
+    - Error handling and logging
+    
+    Args:
+        session_id: Unique session identifier
+        message: User's message/question
+        video_path: Path to video being analyzed (optional)
+        transcript: Transcribed audio from video (optional)
+        video_details: VideoDetails object with identified metadata (optional)
+        
+    Returns:
+        Response dict with 'text', 'segments', and optional 'error' keys
     """
     try:
-        # Import moviepy lazily so the module can still be imported even
-        # if moviepy isn't installed. This avoids hard failures at
-        # application startup and allows graceful degradation.
-        from moviepy.editor import VideoFileClip
+        # Get or create session
+        session_mgr = get_session_manager()
+        session_mgr.add_user_message(session_id, message)
+        
+        # Get conversation history for context
+        history = session_mgr.get_recent_history(session_id, max_messages=10)
+        
+        # Extract video frames if video is provided
+        video_frames = None
+        if video_path:
+            try:
+                frame_extractor = get_frame_extractor(num_frames=5)
+                frames_data = frame_extractor.extract_frame_descriptions(video_path)
+                if frames_data:
+                    video_frames = frames_data
+                    logger.info(f"Extracted {len(frames_data)} frames from video")
+            except Exception as e:
+                logger.warning(f"Frame extraction failed: {e}")
+        
+        # Convert video_details dict to VideoDetails object if needed
+        video_details_obj = None
+        if video_details:
+            if isinstance(video_details, dict):
+                # Reconstruct VideoDetails from dict
+                video_details_obj = VideoDetails(
+                    content_type=video_details.get("content_type"),
+                    title=video_details.get("title"),
+                    show_name=video_details.get("show_name"),
+                    season_number=video_details.get("season_number"),
+                    episode_number=video_details.get("episode_number"),
+                    episode_title=video_details.get("episode_title"),
+                    characters=video_details.get("characters", []),
+                    key_topics=video_details.get("key_topics", []),
+                    genres=video_details.get("genres", []),
+                    duration_seconds=video_details.get("duration_seconds"),
+                )
+            else:
+                video_details_obj = video_details
+        
+        # Generate response using Ollama with frames and transcript
+        ollama = get_ollama_client()
+        response = ollama.answer_question(
+            message,
+            video_frames=video_frames,
+            transcript=transcript,
+            chat_history=history,
+            video_details=video_details_obj,
+        )
+        
+        # Store response in session
+        session_mgr.add_assistant_message(session_id, response)
+        
+        return {
+            "text": response.text,
+            "segments": response.segments,
+            "error": response.error,
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to handle user message: {e}")
+        return {
+            "text": "Sorry, I encountered an error processing your request.",
+            "segments": [],
+            "error": str(e),
+        }
 
-        # Load clip to inspect basic properties (duration, fps).
-        clip = VideoFileClip(video_path)
-        duration = clip.duration
-        fps = clip.fps
 
-        # Close the reader and release resources. We avoid keeping audio
-        # references around to prevent file locks or memory retention.
+def summarize_video(session_id: str, video_path: str, transcript: Optional[str] = None) -> dict:
+    """Generate a summary of a video.
+    
+    Extracts key frames and uses transcript (if available) to provide
+    comprehensive context for the AI summary generation.
+    
+    Args:
+        session_id: Unique session identifier
+        video_path: Path to the video file
+        transcript: Transcribed audio from video (optional)
+        
+    Returns:
+        Response dict with summary text and optional error
+    """
+    try:
+        # Get or create session
+        session_mgr = get_session_manager()
+        
+        # Extract video frames for context
+        video_frames = None
         try:
-            clip.reader.close()
-        except Exception:
-            # Reader close may not always be available; ignore safely.
-            pass
-        clip.audio = None
+            frame_extractor = get_frame_extractor(num_frames=5)
+            frames_data = frame_extractor.extract_frame_descriptions(video_path)
+            if frames_data:
+                video_frames = frames_data
+                logger.info(f"Extracted {len(frames_data)} frames for summary")
+        except Exception as e:
+            logger.warning(f"Frame extraction for summary failed: {e}")
+        
+        # Generate summary using Ollama with frame and transcript context
+        ollama = get_ollama_client()
+        response = ollama.summarize(video_path, video_frames=video_frames, transcript=transcript)
+        
+        # Store in session
+        session_mgr.add_assistant_message(session_id, response)
+        
+        return {
+            "text": response.text,
+            "segments": response.segments,
+            "error": response.error,
+            "video_details": response.video_details.to_dict() if response.video_details else None,
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to summarize video: {e}")
+        return {
+            "text": "",
+            "segments": [],
+            "error": str(e),
+        }
+    except Exception as e:
+        logger.error(f"Failed to summarize video: {e}")
+        return {
+            "text": "",
+            "segments": [],
+            "error": str(e),
+        }
 
-        return {"duration": duration, "fps": fps}
-    except ImportError:
-        # moviepy is not installed — return empty metadata and allow the
-        # application to continue running. Recommend installing moviepy
-        # and ffmpeg for full functionality.
-        return {}
-    except Exception:
-        # Return an empty dict on any other failure — callers should handle this.
-        return {}
 
-
-def handle_user_message(session_id: str, message: str, video_path: str = None) -> Dict:
-    """Record a user message in the session and fetch AI response.
-
-    - Ensures a session history list exists for `session_id`.
-    - Appends the user's message to the session history.
-    - Calls `gemini_client.generate_response` with the video path,
-      user message and conversation history; this function is expected
-      to return a dict with at least the key `text` and optional
-      `segments` (timestamped notes).
-    - Appends the assistant's reply text to the session history and
-      returns the full AI response dict to the caller.
-
-    For production you may want to:
-    - Persist session history to a database, and
-    - Add request/response logging and error handling.
+def is_ollama_available() -> bool:
+    """Check if Ollama service is available.
+    
+    Returns:
+        True if Ollama is reachable, False otherwise
     """
-    if session_id not in _SESSIONS:
-        # Initialize an empty conversation history for this session.
-        _SESSIONS[session_id] = []
-
-    # Save the incoming user message in session history.
-    _SESSIONS[session_id].append({"role": "user", "text": message})
-    history = _SESSIONS[session_id]
-
-    # Query the Gemini client (or mock) for an AI response.
-    ai_resp = gemini_client.generate_response(video_path, message, history)
-
-    # Store assistant response text back into session history for later
-    # dialog context. We only store the textual part here for simplicity.
-    _SESSIONS[session_id].append({"role": "assistant", "text": ai_resp.get("text")})
-
-    return ai_resp
+    ollama = get_ollama_client()
+    return ollama.is_available()
 
 
-def summarize_video(session_id: str, video_path: str) -> Dict:
-    """Generate a concise summary for the provided video.
-
-    - Ensures session exists for context.
-    - Calls the Gemini client with a summarization prompt and stores the
-      assistant reply in session history.
-    Returns the AI response dict (with `text` and optional `segments`).
+def get_ollama_status() -> dict:
+    """Get detailed Ollama status information.
+    
+    Returns:
+        Dict with availability and model information
     """
-    if session_id not in _SESSIONS:
-        _SESSIONS[session_id] = []
+    from config import config
+    ollama = get_ollama_client()
+    
+    return {
+        "available": ollama.is_available(),
+        "host": config.ollama.host,
+        "model": config.ollama.model,
+        "timeout": config.ollama.timeout,
+    }
 
-    # Add a system-like user intent for summarization to the history.
-    prompt = (
-        "Summarize the video concisely in 3-5 bullet points, "
-        "including key events, people mentioned, and notable timestamps (MM:SS)."
-    )
 
-    _SESSIONS[session_id].append({"role": "user", "text": f"SUMMARY_REQUEST: {prompt}"})
-    history = _SESSIONS[session_id]
-
-    ai_resp = gemini_client.generate_response(video_path, prompt, history)
-
-    _SESSIONS[session_id].append({"role": "assistant", "text": ai_resp.get("text")})
-    return ai_resp
+def extract_transcript(video_path: str) -> Optional[str]:
+    """Extract transcript from a video file.
+    
+    For YouTube URLs, attempts to get the transcript directly from YouTube's
+    Transcript API (most accurate). Falls back to Whisper audio transcription
+    for local files or when YouTube transcript is unavailable.
+    
+    Args:
+        video_path: Path to video file or YouTube URL
+        
+    Returns:
+        Transcribed text, or None on failure
+    """
+    try:
+        # Check if this is a YouTube URL
+        if 'youtube.com' in video_path or 'youtu.be' in video_path:
+            logger.info(f"Attempting YouTube transcript API for: {video_path}")
+            yt_transcript = get_youtube_transcript(video_path)
+            if yt_transcript:
+                logger.info(f"YouTube transcript retrieved: {len(yt_transcript)} characters")
+                return yt_transcript
+            logger.info("YouTube transcript unavailable, falling back to Whisper")
+        
+        # Fall back to Whisper transcription for local files or failed YouTube
+        logger.info(f"Starting Whisper transcription for: {video_path}")
+        transcript = extract_and_transcribe(video_path)
+        
+        if transcript:
+            logger.info(f"Whisper transcription complete: {len(transcript)} characters")
+            return transcript
+        else:
+            logger.warning("Transcription returned empty result")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Transcription failed: {e}")
+        return None

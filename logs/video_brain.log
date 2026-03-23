@@ -1,0 +1,92 @@
+2026-03-22 23:17:13 - root - INFO - Logging initialized at level: INFO
+2026-03-22 23:17:13 - root - INFO - Log file: logs/video_brain.log
+2026-03-22 23:17:13 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:17:13 - utils.diagnostics - INFO - VIDEO ANALYSIS DIAGNOSTIC REPORT
+2026-03-22 23:17:13 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:17:13 - utils.diagnostics - INFO - Video: temp_uploads/youtube_ISDjomcYWHs.mp4
+2026-03-22 23:17:13 - utils.diagnostics - INFO - Frames extracted: 5
+2026-03-22 23:17:13 - utils.diagnostics - INFO - Transcript available: True (2648 chars)
+2026-03-22 23:17:13 - utils.diagnostics - INFO - Frames with readable content: True
+2026-03-22 23:17:13 - utils.diagnostics - INFO - Overall data quality: ✅ GOOD
+2026-03-22 23:17:13 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:17:13 - utils.diagnostics - INFO - Visual features analyzed:
+2026-03-22 23:17:13 - utils.diagnostics - INFO -   - Frame shows: dark, grayscale/muted, smooth/blurred, sharp/clear
+2026-03-22 23:17:13 - utils.diagnostics - INFO -   - Frame shows: dark, grayscale/muted, smooth/blurred, sharp/clear
+2026-03-22 23:17:13 - utils.diagnostics - INFO -   - Frame shows: dark, grayscale/muted, smooth/blurred, sharp/clear
+2026-03-22 23:17:13 - utils.diagnostics - INFO - Transcript preview: // // // Bastard's must be shitting herself. – Shitting herself and walker is shitting himself and shoveling his shit on her shit. – I'm planning on eating. – Do we have a backup on the docket? – You'...
+2026-03-22 23:17:13 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:17:13 - services.session_manager - DEBUG - Added user message to session 1774235522
+2026-03-22 23:17:13 - services.frame_extractor - ERROR - Frame extraction failed: 'temp_uploads/youtube_ISDjomcYWHs.mp4' not found
+2026-03-22 23:17:13 - backend - ERROR - Failed to handle user message: OllamaClient.generate_response() got multiple values for argument 'user_message'
+2026-03-22 23:18:04 - root - INFO - Logging initialized at level: INFO
+2026-03-22 23:18:04 - root - INFO - Log file: logs/video_brain.log
+2026-03-22 23:18:04 - utils.cache - INFO - Cache initialized at: .cache
+2026-03-22 23:18:08 - root - INFO - Logging initialized at level: INFO
+2026-03-22 23:18:08 - root - INFO - Log file: logs/video_brain.log
+2026-03-22 23:18:08 - root - INFO - Logging initialized at level: INFO
+2026-03-22 23:18:08 - root - INFO - Log file: logs/video_brain.log
+2026-03-22 23:18:08 - utils.storage - INFO - Downloading YouTube URL: https://www.youtube.com/watch?v=ISDjomcYWHs
+2026-03-22 23:18:08 - utils.storage - DEBUG - Checking video availability...
+2026-03-22 23:18:10 - utils.storage - INFO - Video: The Difference Between Money and Power Explained by Frank Underwood - HOUSE OF CARDS Clip (ID: ISDjomcYWHs)
+2026-03-22 23:18:10 - utils.storage - INFO - Trying format: best[ext=mp4]/best[vcodec=h264]/best
+2026-03-22 23:18:24 - utils.storage - DEBUG - Format best[ext=mp4]/best[vcodec=h264]/best failed: [0;31mERROR:[0m The downloaded file is empty
+2026-03-22 23:18:24 - utils.storage - INFO - Trying format: best[height<=720]
+2026-03-22 23:18:38 - utils.storage - DEBUG - Format best[height<=720] failed: [0;31mERROR:[0m The downloaded file is empty
+2026-03-22 23:18:38 - utils.storage - INFO - Trying format: best[vcodec!=av01]
+2026-03-22 23:18:52 - utils.storage - DEBUG - Format best[vcodec!=av01] failed: [0;31mERROR:[0m The downloaded file is empty
+2026-03-22 23:18:52 - utils.storage - INFO - Trying format: 18
+2026-03-22 23:18:53 - utils.storage - INFO - Downloaded file size: 6.9 MB
+2026-03-22 23:18:53 - utils.storage - INFO - YouTube video downloaded: temp_uploads/youtube_ISDjomcYWHs.mp4
+2026-03-22 23:18:53 - services.frame_extractor - INFO - Extracting 5 frames from 166.2s video (adaptive)
+2026-03-22 23:18:54 - services.frame_extractor - INFO - Extracted 5 frames from temp_uploads/youtube_ISDjomcYWHs.mp4
+2026-03-22 23:18:54 - backend - INFO - Starting transcription for: temp_uploads/youtube_ISDjomcYWHs.mp4
+2026-03-22 23:18:54 - utils.cache - DEBUG - Computing transcript (not in cache)
+2026-03-22 23:18:54 - utils.storage - INFO - Extracting audio from: temp_uploads/youtube_ISDjomcYWHs.mp4
+2026-03-22 23:18:54 - utils.storage - INFO - Audio extracted to: temp_uploads/youtube_ISDjomcYWHs_audio.mp3
+2026-03-22 23:18:55 - utils.storage - INFO - Transcribing audio: temp_uploads/youtube_ISDjomcYWHs_audio.mp3
+2026-03-22 23:19:03 - utils.storage - INFO - Transcription complete: 2644 characters
+2026-03-22 23:19:03 - utils.cache - DEBUG - Cached transcript for youtube_ISDjomcYWHs.mp4
+2026-03-22 23:19:03 - backend - INFO - Transcription complete: 2644 characters
+2026-03-22 23:19:03 - services.frame_extractor - INFO - Extracting 5 frames from 166.2s video (adaptive)
+2026-03-22 23:19:04 - services.frame_extractor - INFO - Extracted 5 frames from temp_uploads/youtube_ISDjomcYWHs.mp4
+2026-03-22 23:19:04 - backend - INFO - Extracted 5 frames for summary
+2026-03-22 23:19:13 - services.ollama_client - DEBUG - Detected content type: TV Show
+2026-03-22 23:19:13 - services.ollama_client - DEBUG - Extracted video details: TV Show
+2026-03-22 23:19:13 - services.session_manager - DEBUG - Added assistant message to session 1774235943
+2026-03-22 23:19:13 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:19:13 - utils.diagnostics - INFO - VIDEO ANALYSIS DIAGNOSTIC REPORT
+2026-03-22 23:19:13 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:19:13 - utils.diagnostics - INFO - Video: temp_uploads/youtube_ISDjomcYWHs.mp4
+2026-03-22 23:19:13 - utils.diagnostics - INFO - Frames extracted: 5
+2026-03-22 23:19:13 - utils.diagnostics - INFO - Transcript available: True (2644 chars)
+2026-03-22 23:19:13 - utils.diagnostics - INFO - Frames with readable content: True
+2026-03-22 23:19:13 - utils.diagnostics - INFO - Overall data quality: ✅ GOOD
+2026-03-22 23:19:13 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:19:13 - utils.diagnostics - INFO - Visual features analyzed:
+2026-03-22 23:19:13 - utils.diagnostics - INFO -   - Frame shows: dark, grayscale/muted, smooth/blurred, sharp/clear
+2026-03-22 23:19:13 - utils.diagnostics - INFO -   - Frame shows: dark, grayscale/muted, smooth/blurred, sharp/clear
+2026-03-22 23:19:13 - utils.diagnostics - INFO -   - Frame shows: dark, grayscale/muted, smooth/blurred, sharp/clear
+2026-03-22 23:19:13 - utils.diagnostics - INFO - Transcript preview: The end Vasquez must be shitting herself. Shitting herself or Walker's shitting himself and shoveling his shit on her shit. I'm planning on eating. We have a backup on the docket? You're on that right...
+2026-03-22 23:19:13 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:22:08 - root - INFO - Logging initialized at level: INFO
+2026-03-22 23:22:08 - root - INFO - Log file: logs/video_brain.log
+2026-03-22 23:22:08 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:22:08 - utils.diagnostics - INFO - VIDEO ANALYSIS DIAGNOSTIC REPORT
+2026-03-22 23:22:08 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:22:08 - utils.diagnostics - INFO - Video: temp_uploads/youtube_ISDjomcYWHs.mp4
+2026-03-22 23:22:08 - utils.diagnostics - INFO - Frames extracted: 5
+2026-03-22 23:22:08 - utils.diagnostics - INFO - Transcript available: True (2644 chars)
+2026-03-22 23:22:08 - utils.diagnostics - INFO - Frames with readable content: True
+2026-03-22 23:22:08 - utils.diagnostics - INFO - Overall data quality: ✅ GOOD
+2026-03-22 23:22:08 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:22:08 - utils.diagnostics - INFO - Visual features analyzed:
+2026-03-22 23:22:08 - utils.diagnostics - INFO -   - Frame shows: dark, grayscale/muted, smooth/blurred, sharp/clear
+2026-03-22 23:22:08 - utils.diagnostics - INFO -   - Frame shows: dark, grayscale/muted, smooth/blurred, sharp/clear
+2026-03-22 23:22:08 - utils.diagnostics - INFO -   - Frame shows: dark, grayscale/muted, smooth/blurred, sharp/clear
+2026-03-22 23:22:08 - utils.diagnostics - INFO - Transcript preview: The end Vasquez must be shitting herself. Shitting herself or Walker's shitting himself and shoveling his shit on her shit. I'm planning on eating. We have a backup on the docket? You're on that right...
+2026-03-22 23:22:08 - utils.diagnostics - INFO - ======================================================================
+2026-03-22 23:22:08 - services.session_manager - DEBUG - Added user message to session 1774235943
+2026-03-22 23:22:08 - services.frame_extractor - INFO - Extracting 5 frames from 166.2s video (adaptive)
+2026-03-22 23:22:08 - services.frame_extractor - INFO - Extracted 5 frames from temp_uploads/youtube_ISDjomcYWHs.mp4
+2026-03-22 23:22:08 - backend - INFO - Extracted 5 frames from video
+2026-03-22 23:22:15 - services.session_manager - DEBUG - Added assistant message to session 1774235943

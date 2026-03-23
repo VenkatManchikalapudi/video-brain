@@ -1,13 +1,22 @@
-moviepy
-openai
-transformers
-torch
-langchain
-streamlit
-google-generativeai
-python-dotenv
-imageio-ffmpeg
-watchdog
-requests
-yt-dlp
-pytube
+# Core dependencies
+streamlit>=1.28.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+
+# Video processing
+moviepy>=1.0.3
+imageio-ffmpeg>=0.4.9
+pillow>=9.0.0
+
+# Text extraction from frames (OCR)
+pytesseract>=0.3.10
+
+# Audio transcription
+openai-whisper>=20231117
+
+# Optional: For YouTube URL support
+yt-dlp>=2023.11.16
+youtube-transcript-api>=0.6.0
+
+# Development/optional
+watchdog>=3.0.0
